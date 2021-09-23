@@ -4,16 +4,10 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.facebook.network.connectionclass.ConnectionClassManager
-import com.facebook.network.connectionclass.ConnectionQuality
-import com.facebook.network.connectionclass.DeviceBandwidthSampler
-import fr.bmartel.speedtest.SpeedTestConst
 import fr.bmartel.speedtest.SpeedTestReport
 import fr.bmartel.speedtest.SpeedTestSocket
 import fr.bmartel.speedtest.inter.ISpeedTestListener
@@ -30,7 +24,6 @@ class MainActivity : AppCompatActivity() {
         socket.addSpeedTestListener(object :ISpeedTestListener{
             override fun onCompletion(report: SpeedTestReport?) {
                 Log.d("SpeedTestSocket","onCompletion,rateBit:${(report?.transferRateBit?.toLong() ?: 0L)  / 1024} kbps")
-                DeviceBandwidthSampler.getInstance().stopSampling()
             }
 
             override fun onProgress(percent: Float, report: SpeedTestReport?) {
