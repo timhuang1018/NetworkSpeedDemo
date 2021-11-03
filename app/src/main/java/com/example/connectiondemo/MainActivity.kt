@@ -21,7 +21,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        getNetworkConfig()
         //see ref: https://github.com/bertrandmartel/speed-test-lib/
         val socket = SpeedTestSocket()
         socket.addSpeedTestListener(object :ISpeedTestListener{
