@@ -4,8 +4,10 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import fr.bmartel.speedtest.SpeedTestReport
@@ -19,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        getNetworkConfig()
         //see ref: https://github.com/bertrandmartel/speed-test-lib/
         val socket = SpeedTestSocket()
         socket.addSpeedTestListener(object :ISpeedTestListener{
@@ -38,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         Thread{
             //upload filename could be 1M, 10M, 100M to change file size
             //set report interval as 1.5 sec per (seems only work for upload)
-            socket.startDownload("http://ipv4.ikoula.testdebit.info/10M.iso",1500)
+//            socket.startDownload("http://ipv4.ikoula.testdebit.info/10M.iso",1500)
             //uncomment to test upload, second parameter is file size
 //                    socket.startUpload("http://ipv4.ikoula.testdebit.info/",10000000 ,     1500)
         }.start()
@@ -50,31 +53,42 @@ class MainActivity : AppCompatActivity() {
     //use android api to get network config: connection type, assumed download and upload kbps
     private fun getNetworkConfig(){
         val cm = ContextCompat.getSystemService(this,ConnectivityManager::class.java)
-        cm?.registerNetworkCallback(NetworkRequest.Builder().build(),
-            object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    super.onAvailable(network)
-                    Log.e("callback","onAvailable, network id:$network")
-                }
-                override fun onLost(network: Network) {
-                    super.onLost(network)
-                    Log.e("callback","onLost, network:$network")
-                }
-            })
+        //api >= 21
+        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            cm?.registerNetworkCallback(NetworkRequest.Builder().build(),
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) {
+                        super.onAvailable(network)
+                        Log.e("callback","onAvailable, network id:$network")
+                    }
+                    override fun onLost(network: Network) {
+                        super.onLost(network)
+                        Log.e("callback","onLost, network:$network")
+                    }
+                })
 
-        Log.e("networks","${cm?.allNetworks?.toList()}")
-        cm?.allNetworks?.forEach {
-            val cap = cm.getNetworkCapabilities(it)
+            Log.e("networks","${cm?.allNetworks?.toList()}")
+            cm?.allNetworks?.forEach {
+                val cap = cm.getNetworkCapabilities(it)
 
-            Log.e("network status","""
+                Log.e("network status","""
                 network:${it}, type:${getNetworkType(cap)}
                 download:${cap?.linkDownstreamBandwidthKbps}kbps
                 upload:${cap?.linkUpstreamBandwidthKbps}kbps
             """.trimIndent())
+            }
+        }else{
+            //api below 21
+                val info = cm?.activeNetworkInfo
+            if(info != null && info.isConnected){
+                //有網路連線
+                Log.e("network state","type:${info.type}")
+            }
         }
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun getNetworkType(cap: NetworkCapabilities?): String {
         return when{
             cap == null -> ""
